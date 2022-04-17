@@ -13,7 +13,7 @@ namespace Pronia_eCommerce.Models
         [Key]
         public int Id { get; set; }
 
-        public int InvoiceNo { get; set; }
+        public string InvoiceNo { get; set; }
 
         public DateTime SaleDate { get; set; }
 
@@ -21,6 +21,12 @@ namespace Pronia_eCommerce.Models
         public string EndUserId { get; set; }
         public EndUser EndUser { get; set; }
 
+        [ForeignKey("UnregisteredCustomer")]
+        public int? UnregisteredCustomerId { get; set; }
+        public UnregisteredCustomer UnregisteredCustomer { get; set; }
+
         public List<SaleItem> SaleItems { get; set; }
+
+        public bool hideToClien { get; set; }
     }
 }

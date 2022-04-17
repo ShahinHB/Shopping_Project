@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
@@ -17,10 +18,14 @@ namespace Pronia_eCommerce.Controllers
     public class ShopController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
+        private readonly SignInManager<IdentityUser> _signInManager;
 
-        public ShopController(AppDbContext context)
+        public ShopController(AppDbContext context, UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager)
         {
             _context = context;
+            _userManager = userManager;
+            _signInManager = signInManager;
         }
         public IActionResult Index(VmProductSearch Search)
         {
@@ -40,7 +45,8 @@ namespace Pronia_eCommerce.Controllers
                                                       .Include(p => p.ProductTagToProducts)
                                                       .ThenInclude(pt => pt.ProductTag)
                                                       .Include(p => p.ProductSizeToProducts)
-                                                      .ThenInclude(ps => ps.ProductSize).ToList();
+                                                      .ThenInclude(ps => ps.ProductSize)
+                                                      .Include(r=>r.Ratings).ToList();
 
             int pageCount = (int)Math.Ceiling(Convert.ToDecimal(products.Count / PageItemCount));
             model.Products = products.Skip(((int)Search.Page - 1) * (int)PageItemCount).Take((int)PageItemCount).ToList();
@@ -81,6 +87,8 @@ namespace Pronia_eCommerce.Controllers
                                                .ThenInclude(ps => ps.ProductSize)
                                                .Include(p => p.ProductComments)
                                                .ThenInclude(pc => pc.CommentPost)
+                                               .Include(p=>p.ProductComments)
+                                               .ThenInclude(pc=>pc.User)
                                                .FirstOrDefault(p => p.Id == Id);
                     model2.RatingStars = _context.RatingStars.Where(r => r.ProductId == Id).ToList();
 
@@ -132,6 +140,25 @@ namespace Pronia_eCommerce.Controllers
                 _context.SaveChanges();
 
 
+            }
+            else
+            {
+                if (_signInManager.IsSignedIn(User)&& commentPost.FullName == null && commentPost.Email == null && commentPost.Content != null)
+                {
+                    commentPost.FullName = "";
+                    commentPost.Email = "";
+                    _context.CommentPosts.Add(commentPost);
+                    _context.SaveChanges();
+                    ProductComment comment = new();
+                    comment.ProductId = commentPost.ProductId;
+                    comment.CommentPostId = commentPost.Id;
+                    comment.UserId = _userManager.GetUserId(User);
+                    comment.CreatedDate = DateTime.Now;
+                    comment.Content = commentPost.Content;
+
+                    _context.ProductComments.Add(comment);
+                    _context.SaveChanges();
+                }
             }
 
             return RedirectToAction("SingleProduct", new { Id = commentPost.ProductId });
@@ -271,6 +298,20 @@ namespace Pronia_eCommerce.Controllers
             Response.Cookies.Append("favourites", newData, options);
 
             return RedirectToAction("index", "Wishlist");
+        }
+
+        public IActionResult RefreshRating(string userIp) {
+
+
+            VmResponse response = new();
+            response.StarsCounts = _context.RatingStars.Where(r =>r.UserIp == userIp).ToList();
+
+
+
+            return Json(response); 
+        
+        
+        
         }
 
 

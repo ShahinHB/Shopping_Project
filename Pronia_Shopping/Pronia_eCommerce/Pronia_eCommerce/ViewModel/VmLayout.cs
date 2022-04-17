@@ -10,5 +10,6 @@ namespace Pronia_eCommerce.ViewModel
     {
         public Setting Setting { get; set; }
         public List<SiteSocial> SiteSocial { get; set; }
+
     }
 }

@@ -25,7 +25,14 @@ namespace Pronia_eCommerce.Controllers
         }
         public IActionResult Index(VmSearch Search)
         {
-            
+            if (User.Identity.IsAuthenticated)
+            {
+                if (!User.IsInRole("User"))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
+            }
+
             VmBlog model = new();
             if (Search==null|| Search.Page == null)
             {
@@ -33,11 +40,27 @@ namespace Pronia_eCommerce.Controllers
             }
             double PageItemCount = 6;
             model.LatestBlogs = _context.Blogs.OrderByDescending(b => b.CreatedDate).Where(p => p.Image != null).Take(3).ToList();
-            List<Blog> blogs = _context.Blogs.Where(b=>(Search.SearchData != null?b.Title.Contains(Search.SearchData) :true)&&
+            List<Blog> blogs = _context.Blogs.Include(b=>b.SiteUser).Where(b=>(Search.SearchData != null?b.Title.Contains(Search.SearchData) :true)&&
                                               (Search.SearchCategory != null?b.BlogCategoryId== Search.SearchCategory : true)&&
                                               (Search.SearchTag != null?b.BlogTagToBlogs.Any(bt=>bt.BlogTagId== Search.SearchTag) :true)).OrderByDescending(p=>p.CreatedDate).ToList();
 
             int pageCount = (int)Math.Ceiling(Convert.ToDecimal(blogs.Count / PageItemCount));
+
+
+
+            var BlgTasdaadasdsdags = _context.BlogTagToBlogs.ToList().GroupBy(d => d.BlogTagId).OrderByDescending(d=>d.Select(w=>w.BlogId).Count());
+
+            List<int> w = new();
+            List<BlogTag> blogtagsssss = new();
+            foreach (var item in BlgTasdaadasdsdags)
+            {
+                w.Add(item.Key);
+            }
+
+            foreach (var item in w.Take(5))
+            {
+                blogtagsssss.Add(_context.BlogTags.Find(item));
+            }
 
             model.Blogs = blogs.Skip(((int)Search.Page - 1) * (int)PageItemCount).Take((int)PageItemCount).ToList();
             ViewBag.PageCount = pageCount;
@@ -46,7 +69,7 @@ namespace Pronia_eCommerce.Controllers
             model.Setting = _context.Setting.FirstOrDefault();
             model.SiteSocial = _context.SiteSocials.ToList();
             model.BlogCategories = _context.BlogCategories.ToList();
-            model.BlogTags = _context.BlogTags.ToList();
+            model.BlogTags = blogtagsssss;
             model.CollectionS = _context.CollectionS.FirstOrDefault();
             model.Banner = _context.Banners.FirstOrDefault(b => b.Title.ToLower() == "all blogs");
 
@@ -55,13 +78,21 @@ namespace Pronia_eCommerce.Controllers
 
         public IActionResult SingleBlog(int? Id, VmSearch search)
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                if (!User.IsInRole("User"))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
+            }
+
             if (Id!=null)
             {
                 VmBlog model2 = new();
                 if (_context.Blogs.Find(Id)!=null)
                 {
                     model2.LatestBlogs = _context.Blogs.OrderByDescending(b => b.CreatedDate).Where(p => p.Image != null).Take(3).ToList();
-                    model2.BlogDetail = _context.Blogs.Include(c => c.Comments)
+                    model2.BlogDetail = _context.Blogs.Include(b => b.SiteUser).Include(c => c.Comments)
                                                       .ThenInclude(cu=>cu.User)
                                                       .Include(c=>c.Comments).ThenInclude(cp => cp.CommentPost).Include(b=>b.BlogTagToBlogs).ThenInclude(bt=>bt.BlogTag).Include(t=>t.Category).FirstOrDefault(b=>b.Id==Id);
 
@@ -86,6 +117,7 @@ namespace Pronia_eCommerce.Controllers
 
         public IActionResult PostComment(CommentPost commentPost)
         {
+
             if (ModelState.IsValid)
             {
 

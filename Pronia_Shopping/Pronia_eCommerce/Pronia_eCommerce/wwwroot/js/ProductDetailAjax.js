@@ -1,152 +1,6 @@
 $(document).ready(function () {
 
 
-    let starReview = function (userIp, singleProductId, ratingValue) {
-
-        $.ajax({
-            url: location.origin + "/Shop/ReviewPost",
-            type: "get",
-            dataType: "json",
-            data: {
-                userIp: userIp,
-                productId: String(singleProductId),
-                ratingValue: ratingValue
-            },
-            success: function (response) {
-                if (response.success != null) {
-
-                    swal("Good job!", `Thanks for taking the time to leave us a ${ratingValue} star rating `, "success");
-                    $(".rating-wrap .rating ul li .fa-star").removeClass("fw");
-                    for (let xs = 0; xs < response.starsCount; xs++) {
-
-                        document.querySelectorAll(".rating-wrap .rating ul li .fa-star")[xs].classList.add("fw");
-
-                    }
-                    let rval2 = response.products["$values"][0].ratings["$values"];
-                    for (let rs = 0; rs < rval2.length; rs++) {
-                        let fiveS = 0;
-                        let fourS = 0;
-                        let threeS = 0;
-                        let twoS = 0;
-                        let oneS = 0;
-
-                        for (let str = 0; str < rval2.length; str++) {
-                            if (rval2[str].star == 5) {
-                                fiveS++;
-                            }
-                            else if (rval2[str].star == 4) {
-                                fourS++;
-                            }
-                            else if (rval2[str].star == 3) {
-                                threeS++;
-                            }
-                            else if (rval2[str].star == 2) {
-                                twoS++;
-                            }
-                            else if (rval2[str].star == 1) {
-                                oneS++;
-                            }
-                        }
-
-                        let sum = (fiveS * 5) + (fourS * 4) + (threeS * 3) + (twoS * 2) + (oneS * 1);
-                        let rSum = fiveS + fourS + threeS + twoS + oneS;
-                        let sumRsum = sum / rSum;
-
-                        if (sumRsum != 0) {
-
-                            document.getElementById("rating_value").innerText = `(${sumRsum.toFixed(1)} Rating)`;
-                        }
-
-                    }
-
-                }
-                else if (response.changed != null) {
-
-                    swal("Changed!", `Thanks for taking the time to leave us a ${ratingValue} star rating `, "success");
-                    $(".rating-wrap .rating ul li .fa-star").removeClass("fw");
-                    for (var xs = 0; xs < response.starsCount; xs++) {
-
-                        document.querySelectorAll(".rating-wrap .rating ul li .fa-star")[xs].classList.add("fw");
-
-                    }
-                    let rval2 = response.products["$values"][0].ratings["$values"];
-                    for (let rs = 0; rs < rval2.length; rs++) {
-                        let fiveS = 0;
-                        let fourS = 0;
-                        let threeS = 0;
-                        let twoS = 0;
-                        let oneS = 0;
-
-                        for (let str = 0; str < rval2.length; str++) {
-                            if (rval2[str].star == 5) {
-                                fiveS++;
-                            }
-                            else if (rval2[str].star == 4) {
-                                fourS++;
-                            }
-                            else if (rval2[str].star == 3) {
-                                threeS++;
-                            }
-                            else if (rval2[str].star == 2) {
-                                twoS++;
-                            }
-                            else if (rval2[str].star == 1) {
-                                oneS++;
-                            }
-                        }
-
-                        let sum = (fiveS * 5) + (fourS * 4) + (threeS * 3) + (twoS * 2) + (oneS * 1);
-                        let rSum = fiveS + fourS + threeS + twoS + oneS;
-                        let sumRsum = sum / rSum;
-
-                        if (sumRsum != 0) {
-
-                            document.getElementById("rating_value").innerText = `(${sumRsum.toFixed(1)} Rating)`;
-                        }
-
-                    }
-
-                }
-                else if (response.error != null) {
-
-                    swal("Oops", "Something went wrong", "error");
-                }
-            },
-            error: function (error) {
-                console.log(error);
-            },
-            complete: function () {
-
-            }
-        });
-
-    }
-
-    if (document.querySelectorAll(".modalStarBtn") != null || document.querySelectorAll(".modalStarBtn") != undefined || document.querySelectorAll(".modalStarBtn").length>0) {
-
-
-        let modalStarBtn = document.querySelectorAll(".modalStarBtn");
-        for (let r = 0; r < modalStarBtn.length; r++) {
-            modalStarBtn[r].addEventListener("click", function () {
-                $.getJSON("https://api.ipify.org?format=json", function (data) {
-
-                    let userIpPD = data.ip
-                    let ratingValuePD = String(modalStarBtn[r].nextElementSibling.value)
-                    let singleProductIdPD = ratValprodId.value;
-
-
-                    starReview(userIpPD, singleProductIdPD, ratingValuePD);
-
-                })
-
-            })
-        }
-
-
-
-
-    }
-
     let eye = document.querySelectorAll(".productFullDetail");
 
     for (let i = 0; i < eye.length; i++) {
@@ -172,13 +26,12 @@ $(document).ready(function () {
                 sizeOptions[op].remove()
             }
 
-            document.getElementById("rating_value").innerText = "(0.0 Rating)";
-            $(".rating-wrap .rating ul li .fa-star").removeClass("fw");
+            document.getElementById("rating_value22").innerText = "(0.0 Rating)";
 
             let id = eye[i].firstChild.nextSibling.value;
 
             $.ajax({
-                url: "Shop/GetProductInfo",
+                url: "/Shop/GetProductInfo",
                 type: "get",
                 dataType: "json",
                 data: {
@@ -196,17 +49,18 @@ $(document).ready(function () {
                         var imagesArr = [];
 
                         let ratValprodId = document.getElementById("ratValprodId");
-                        ratValprodId.value = Product.id
 
                         let prodRatings = Product.ratings["$values"];
-                        
-                        for (let rs = 0; rs < prodRatings.length; rs++) {
-                            let fiveS = 0;
-                            let fourS = 0;
-                            let threeS = 0;
-                            let twoS = 0;
-                            let oneS = 0;
 
+
+                        let fiveS = 0;
+                        let fourS = 0;
+                        let threeS = 0;
+                        let twoS = 0;
+                        let oneS = 0;
+
+                        for (let rs = 0; rs < prodRatings.length; rs++) {
+                            
                             for (let str = 0; str < prodRatings.length; str++) {
                                 if (prodRatings[str].star == 5) {
                                     fiveS++;
@@ -225,33 +79,15 @@ $(document).ready(function () {
                                 }
                             }
 
-                            let sum = (fiveS * 5) + (fourS * 4) + (threeS * 3) + (twoS * 2) + (oneS * 1);
-                            let rSum = fiveS + fourS + threeS + twoS + oneS;
-                            let sumRsum = sum / rSum;
-
-                            if (sumRsum != 0) {
-
-                                document.getElementById("rating_value").innerText = `(${sumRsum.toFixed(1)} Rating)`;
-                            }
-
                         }
 
-                        $.getJSON("https://api.ipify.org?format=json", function (data) {
+                        let sum = (fiveS * 5) + (fourS * 4) + (threeS * 3) + (twoS * 2) + (oneS * 1);
+                        let rSum = fiveS + fourS + threeS + twoS + oneS;
+                        let sumRsum = sum / rSum;
 
-                            let userIp2 = data.ip;
-
-
-                            for (let x = 0; x < prodRatings.length; x++) {
-                                if (prodRatings[x].userIp == userIp2) {
-                                    for (var xs = 0; xs < prodRatings[x].star; xs++) {
-
-                                        document.querySelectorAll(".rating-wrap .rating ul li .fa-star")[xs].classList.add("fw");
-
-                                    }
-                                }
-                            }
-                        })
-                        
+                        if (sumRsum != 0 && !Number.isNaN(sumRsum)) {
+                            document.getElementById("rating_value22").innerText = `(${sumRsum.toFixed(1)} Rating)`;
+                        }
 
                         for (var i in productImges) {
                             for (var t = 0; t < productImges[i].length; t++) {
@@ -305,7 +141,20 @@ $(document).ready(function () {
                         let modalPrice = document.getElementById("modalPrice");
                         let modalDesc = document.getElementById("modal-product-desc");
                         let productName = document.getElementById("product-name");
-                        modalPrice.innerText ="$"+pricesArr[0].toFixed(2);
+
+                        if (quantityArr[0]==0) {
+
+                            modalPrice.innerText = ""
+                            let lma = document.createElement("span")
+                            lma.classList.add("text-danger", "text-danger",)
+                            lma.style.fontSize = "20px"
+                            lma.innerText = "Out Stock"
+                            modalPrice.appendChild(lma)
+                        }
+                        else {
+                            modalPrice.innerText = "$" + pricesArr[0].toFixed(2);
+                        }
+
                         productName.innerText = Product.name
                         modalDesc.innerText = Product.shortDesc
 
@@ -317,8 +166,6 @@ $(document).ready(function () {
                         }
                         $(".nice-select2").niceSelect();
 
-
-
                         let selector = document.querySelectorAll("#selector-size .nice-select ul li")
 
                         for (let s = 0; s < selector.length; s++) {
@@ -326,12 +173,21 @@ $(document).ready(function () {
                             selector[s].addEventListener("click", function () {
 
                                 let sizeId = selector[s].getAttribute('data-value');
-
                                 for (let i = 0; i < productSizeToProductHelper.length; i++) {
 
                                     if (productSizeToProductHelper[i].productSizeId == sizeId) {
 
-                                        modalPrice.innerText = "$"+productSizeToProductHelper[i].price.toFixed(2)
+                                        if (productSizeToProductHelper[i].quantity==0) {
+                                            modalPrice.innerText = ""
+                                            let lma = document.createElement("span")
+                                            lma.classList.add("text-danger","text-danger",)
+                                            lma.style.fontSize = "20px"
+                                            lma.innerText = "Out Stock"
+                                            modalPrice.appendChild(lma)
+                                        }
+                                        else {
+                                            modalPrice.innerText = "$" + productSizeToProductHelper[i].price.toFixed(2)
+                                        }
 
                                     }
 
@@ -498,7 +354,6 @@ $(document).ready(function () {
         })
 
     }
-
     if (document.querySelectorAll(".add-to-cart-btn-from-wishlist").length!=0) {
         let addToCartBtn = document.querySelectorAll(".add-to-cart-btn-from-wishlist");
         let addtoCartProductId = document.querySelectorAll(".add-to-cart-product-id");
@@ -534,6 +389,9 @@ $(document).ready(function () {
 
                             swal("Oops", "Something went wrong", "error");
                         }
+                        else if (response.quantityError) {
+                            swal("Oops", "This product is out of stock!", "warning");
+                        }
                     },
                     error: function (error) {
                         console.log(error);
@@ -550,7 +408,6 @@ $(document).ready(function () {
         }
 
     }
-
     let addToCart2 = document.querySelectorAll(".add-to-cart2");
     for (let atc = 0; atc < addToCart2.length; atc++) {
         addToCart2[atc].addEventListener("click", function (e) {
@@ -581,6 +438,9 @@ $(document).ready(function () {
 
                         swal("Oops", "Something went wrong", "error");
                     }
+                    else if (response.quantityError) {
+                        swal("Oops", "This product is out of stock!", "warning");
+                    }
                 },
                 error: function (error) {
                     console.log(error);
@@ -595,7 +455,6 @@ $(document).ready(function () {
         })
 
     }
-
 
     if (document.getElementById("addToCart_ProductDetail") != null || document.getElementById("addToCart_ProductDetail") != undefined) {
 
@@ -632,6 +491,9 @@ $(document).ready(function () {
                     else if (response.error != null) {
 
                         swal("Oops", "Something went wrong", "error");
+                    }
+                    else if (response.quantityError) {
+                        swal("Oops", "This product is out of stock!", "warning");
                     }
                 },
                 error: function (error) {

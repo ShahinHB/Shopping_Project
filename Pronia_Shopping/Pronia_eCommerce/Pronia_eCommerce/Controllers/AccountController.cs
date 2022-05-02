@@ -38,11 +38,23 @@ namespace Pronia_eCommerce.Controllers
 
         public IActionResult Index()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                if (!User.IsInRole("User"))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
+                else
+                {
+                    return RedirectToAction("Profile","Account");
+                }
+            }
 
             VmRegister model = new();
             model.Setting = _context.Setting.FirstOrDefault();
             model.SiteSocial = _context.SiteSocials.ToList();
             model.Countries = _context.Countries.ToList();
+            model.Banner = _context.Banners.FirstOrDefault(p => p.Page == "Login");
 
             return View(model);
         }
@@ -52,6 +64,26 @@ namespace Pronia_eCommerce.Controllers
         {
             if (ModelState.IsValid)
             {
+                bool combinationExistsUsername = await _context.Users.AnyAsync(x => x.UserName == model.UserName);
+                bool combinationExistsEmail = await _context.Users.AnyAsync(x => x.Email == model.Email);
+
+                if (combinationExistsUsername)
+                {
+                    TempData["RegisterExistError"] = "The specified username is already registered!";
+                    return RedirectToAction("Index");
+                }
+                else if (combinationExistsEmail)
+                {
+                    TempData["RegisterExistError"] = "The specified email is already registered!";
+                    return RedirectToAction("Index");
+                }
+
+                if (model.Password!=model.ConfirmPassword)
+                {
+                    TempData["RegisterExistError"] = "Confirm Password and Password doesn't match!";
+                    return RedirectToAction("Index");
+                }
+
                 EndUser newUser = new()
                 {
                     Name = model.Name,
@@ -60,11 +92,14 @@ namespace Pronia_eCommerce.Controllers
                     Email = model.Email,
                     CreatedDate = DateTime.Now,
                     CountryId = model.CountryId
-
-
                 };
 
                 var result = await _userManager.CreateAsync(newUser, model.Password);
+                await _context.SaveChangesAsync();
+                IdentityRole identityRole = _context.Roles.Find(_context.Roles.FirstOrDefault(r => r.Name == "User").Id);
+                await _userManager.AddToRoleAsync(newUser, identityRole.Name);
+                await _context.SaveChangesAsync();
+
 
                 if (result.Succeeded)
                 {
@@ -96,6 +131,15 @@ namespace Pronia_eCommerce.Controllers
 
         public IActionResult Profile()
         {
+
+            if (User.Identity.IsAuthenticated)
+            {
+                if (!User.IsInRole("User"))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
+            }
+
             if (_signInManager.IsSignedIn(User))
             {
                 if (_context.EndUsers.Find(_userManager.GetUserId(User)) != null)
@@ -107,6 +151,7 @@ namespace Pronia_eCommerce.Controllers
                     _context.EndUsers.Find(_userManager.GetUserId(User)).ResetPasswordCode = "";
                     _context.SaveChanges();
                     model.Countries = _context.Countries.ToList();
+                    model.Banner = _context.Banners.FirstOrDefault(b => b.Page == "Account");
                     return View(model);
                 }
                 else
@@ -125,6 +170,14 @@ namespace Pronia_eCommerce.Controllers
         }
 
         public IActionResult Order(int? Id) {
+
+            if (User.Identity.IsAuthenticated)
+            {
+                if (!User.IsInRole("User"))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
+            }
 
             if (Id!=null)
             {
@@ -237,18 +290,35 @@ namespace Pronia_eCommerce.Controllers
             if (vmRegister.VmLogin.UserName != null && vmRegister.VmLogin.Password != null)
             {
 
+
+
                 var result = await _signInManager.PasswordSignInAsync(vmRegister.VmLogin.UserName, vmRegister.VmLogin.Password, false, false);
 
                 if (result.Succeeded)
                 {
 
-                    return RedirectToAction("Profile");
+                    var user = await _userManager.FindByNameAsync(vmRegister.VmLogin.UserName);
+
+                    if (await _userManager.IsInRoleAsync(user, "User"))
+                    {
+                        return RedirectToAction("Profile");
+                    }
+                    else
+                    {
+                        TempData["LoginRoleError"] = "You dont have permission to use this account like End User!";
+                        return RedirectToAction("Logout");
+                    }
+
+                    
                 }
                 else
                 {
                     TempData["LoginError"] = "Email address or password is incorrect!";
                     return RedirectToAction("Index");
                 }
+
+
+
             }
             else
             {
@@ -264,12 +334,21 @@ namespace Pronia_eCommerce.Controllers
         {
             await _signInManager.SignOutAsync();
 
-            return RedirectToAction("Index", "Home");
-        }
 
+            return RedirectToAction("Index", "Home");
+
+
+        }
 
         public IActionResult ResetPassword()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                if (!User.IsInRole("User"))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
+            }
 
             VmResetPassword model = new();
             model.Setting = _context.Setting.FirstOrDefault();
@@ -319,7 +398,7 @@ namespace Pronia_eCommerce.Controllers
                         ViewBag.Message = "Reset password link has been sent to your email id.";
 
                     }
-
+                    TempData["MailSended"] = "We sent email to you for reset your password. Please check your email!";
                     return RedirectToAction("Index");
                 }
                 else
@@ -356,6 +435,13 @@ namespace Pronia_eCommerce.Controllers
 
         public ActionResult ChangePassword(string id)
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                if (!User.IsInRole("User"))
+                {
+                    return RedirectToAction("Logout", "Account");
+                }
+            }
 
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -436,6 +522,12 @@ namespace Pronia_eCommerce.Controllers
             }
 
             return RedirectToAction("Profile");
+        }
+
+        public IActionResult AccessDenied()
+        {
+
+            return View();
         }
 
     }

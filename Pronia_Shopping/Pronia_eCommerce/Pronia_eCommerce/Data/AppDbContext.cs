@@ -50,6 +50,8 @@ namespace Pronia_eCommerce.Data
         public DbSet<BankCarts> BankCarts { get; set; }
         public DbSet<InvoiceNo> Invoice { get; set; }
         public DbSet<UnregisteredCustomer> UnregisteredCustomers { get; set; }
+        public DbSet<SiteUser> SiteUsers { get; set; }
+        public DbSet<Testimonial> Testimonials { get; set; }
 
     }
 }
